@@ -141,54 +141,6 @@ class MultiScene(Scene):
         # add classes on a child by child basis
         return list_of_subscenes
 
-    """
-    def init_subscenes(self, list_of_scene_classes, border_size=0):
-        # this function automatically divides the screen amongst the subscenes
-        screen_width, screen_height = self.screen.get_rect()[0:2]
-        number_of_subscenes = len(list_of_scene_classes)
-        div_size = tuple(dim/number_of_subscenes for dim in [screen_width, screen_height])
-        max_subscene_size = tuple((dim - (number_of_subscenes + 1)*border_size) for dim in div_size)
-        list_of_subscenes = []
-        for n, scene_class in enumerate(list_of_scene_classes):
-            spacing_x = spacing_y = (n + 1) * border_size
-            topleft = tuple(dim + spacing for dim, spacing in map(max_subscene_size, (spacing_x, spacing_y)))
-            subscene_rect = pg.Rect()
-            listlist_of_subscenes
-        return list_of_subscenes
-    """
-
-
-'''class RGBScene(Scene):
-    def __init__(self, screen):
-        super().__init__(screen)
-        self.RGBGraph = rgb_holder.RGBGraph(1)
-
-    def update(self):
-        pass
-
-    def handle_events(self):
-        events = pg.event.get()
-        for event in events:
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
-                if event.key == pg.K_UP:
-                    self.RGBGraph.change_z_val(1)
-                if event.key == pg.K_DOWN:
-                    self.RGBGraph.change_y_val(1)
-                if event.key == pg.K_LEFT:
-                    self.RGBGraph.update_plane_xyz(1)
-                if event.key == pg.K_RIGHT:
-                    self.RGBGraph.change_x_val(1)
-
-    def render(self):
-        self.screen.fill((100, 100, 100))
-        self.RGBGraph.render(self.screen)'''
-
 
 class RGBScene(MultiScene):
     def __init__(self, screen):
@@ -224,20 +176,14 @@ class RGBScene(MultiScene):
                 if event.key == pg.K_UP:
                     self.RGBGraph.change_z_val(1)
                     self.planeXY.translate(0, 0, 1)
-                    # self.planeYZ.translate(0, 0, 1)
-                    # self.planeXZ.translate(0, 0, 1)
                 if event.key == pg.K_DOWN:
                     self.RGBGraph.change_y_val(1)
-                    # self.planeXY.translate(0, 1, 0)
-                    # self.planeYZ.translate(0, 1, 0)
                     self.planeXZ.translate(0, 1, 0)
                 if event.key == pg.K_LEFT:
                     self.RGBGraph.update_plane_xyz(1)
                 if event.key == pg.K_RIGHT:
                     self.RGBGraph.change_x_val(1)
-                    # self.planeXY.translate(1, 0, 0)
                     self.planeYZ.translate(1, 0, 0)
-                    # self.planeXZ.translate(1, 0, 0)
 
     def render(self):
         self.screen.fill((100, 100, 100))
@@ -256,15 +202,10 @@ class IsometricScene(SubScene):
         super().__init__(screen, rect, *shapes)
 
     def init(self):
-        """self.camera = projections.Isometric()
-        self.cube = prisms.Cube((50, 50, 5), 100, 100, 100)
-        self.cube.apply_rotation()
-        self.rot = rotations.RotationAboutPoint((50, 50, 5), (0, 0, 0))"""
         self.iso_transform = point_projection.Isometric(1)
 
     def update(self):
         pass
-        #self.cube.apply_rotation()
 
     def handle_events(self, events):
         for event in events:
@@ -275,14 +216,6 @@ class IsometricScene(SubScene):
                 if event.key == pg.K_ESCAPE:
                     pg.quit()
                     sys.exit()
-                """if event.key == pg.K_UP:
-                    self.cube.apply_translation(0, 10, 0)
-                if event.key == pg.K_DOWN:
-                    self.cube.apply_translation(0, -10, 0)
-                if event.key == pg.K_LEFT:
-                    self.cube.apply_translation(10, 0, 0)
-                if event.key == pg.K_RIGHT:
-                    self.cube.apply_translation(-10, 0, 0)"""
 
     def render(self, plane_xyz):
         self.subsurface.fill((155, 155, 155))
@@ -296,5 +229,5 @@ class IsometricScene(SubScene):
             self.planes.get("xy").render(self.subsurface, self.iso_transform)
         for shape in self.args:
             shape.render(self.subsurface, self.iso_transform)
-        #self.cube.render(self.screen, self.camera, self.rot)
+
 
