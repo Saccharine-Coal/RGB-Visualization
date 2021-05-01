@@ -51,7 +51,7 @@ class Game:
         pg.key.set_repeat(500, 100)
 
         self.active_scene = scenes.RGBScene(self.screen)
-        print('init GAME')
+        print('Game initialization complete!')
 
 
     def update(self):

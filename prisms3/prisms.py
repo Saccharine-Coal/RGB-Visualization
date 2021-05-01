@@ -4,6 +4,7 @@ import pygame as pg
 import prisms3.shapes
 
 
+# DEFAULT CUBE COLORS
 FACE1_COLOR = (255, 0, 0)
 FACE2_COLOR = (0, 255, 0)
 BLUE_FACE = (0, 0, 255)
@@ -176,7 +177,7 @@ class Cube(object):
             @param alpha value to set
         """
         for face in self.faces:
-            if len(self.color) == 3:
+            if len(face.color) == 3:
                 face.color = (*face.color, alpha)
             else:
                 face.color = (*face.color[0:3], alpha)
@@ -204,7 +205,7 @@ class PlaneXY(prisms3.shapes.Rect3):
         self.origin = origin
         self.size = size
         self.limit = limit
-        self.pos = origin
+        self.position = origin
         super().__init__(*self.get_plane(origin, size))
 
     def get_plane(self, origin, size):
@@ -220,46 +221,41 @@ class PlaneXY(prisms3.shapes.Rect3):
         color = (20, 60, 80)
         return v1, v2, v3, color
 
-    def update_pos(self, dx, dy, dz):
+    def update_position(self, dx=0, dy=0, dz=0):
         """
         This function is solely intended to be used with the constrain() function for now.
             @param translation x
             @param translation y
             @param translation z
         """
-        self.pos = tuple((a-b) for a, b in zip(self.pos, (dx, dy, dz)))
+        self.position = tuple((a-b) for a, b in zip(self.position, (dx, dy, dz)))
 
-    def constrain(self):
+    def constrain(self, translation):
         """
-        Constrain an xyz points in a cube of equal size.
-            @return constrained xyz tuple
+        Constrain along z-axis (limit).
+            @return constrained 3-tuple
         """
-        dx, dy, dz = tuple((a - b) for a, b in zip(self.origin, self.pos))
-        x, y, z = 0, 0, 0
-        if dx >= self.limit:
-            x = -self.limit
-        if dy >= self.limit:
-            y = -self.limit
-        if dz >= self.limit:
-            z = -self.limit
-        self.pos = tuple((a-b) for a, b in zip(self.pos, (x, y, z)))
-        return (x, y, z)
+        origin_x, origin_y, origin_z = self.origin
+        x, y, z = self.position
+        dz = origin_z - z + translation
+        max, min = self.limit, -self.limit
+        if dz >= max:
+            translation = min + translation
+        elif dz <= min:
+            translation = max - translation
+        return (0, 0, translation)
 
-    def translate(self, dx, dy, dz):
+    def translate(self, translation):
         """
         Apply translation to to xyz tuples and constrain if needed.
             @param translation x
-            @param translation y
-            @param translation z
         """
         translated_points = []
-        self.update_pos(dx, dy, dz)
-        d_pos = self.constrain()
+        constrained_translation = self.constrain(translation)
+        self.update_position(*constrained_translation)
         for point in self.points:
-            x, y, z = point
-            trans_point = (x+dx, y+dy, z+dz)
-            constrained_point = tuple(a + b for a, b in zip (trans_point, d_pos))
-            translated_points.append(constrained_point)
+            translated_point = tuple(a + b for a, b in zip (constrained_translation, point))
+            translated_points.append(translated_point)
         self.points = translated_points
 
 
@@ -286,6 +282,36 @@ class PlaneYZ(PlaneXY):
         return [v1, v2, v3, color]
 
 
+    def constrain(self, translation):
+        """
+        If translated point > max set to min. If tranlated point < min set to max. Else, translate normally.
+        Constrain along x-axis (limit).
+            @return 3-tuple within limits
+        """
+        origin_x, origin_y, origin_z = self.origin
+        x, y, z = self.position
+        dx = origin_x - x + translation
+        max, min = self.limit, -self.limit
+        if dx >= max:
+            translation = min + translation
+        elif dx <= min:
+            translation = max - translation
+        return (translation, 0, 0)
+
+    def translate(self, translation):
+        """
+        Apply translation to to xyz tuples and constrain if needed.
+            @param translation x
+        """
+        translated_points = []
+        constrained_translation = self.constrain(translation)
+        self.update_position(*constrained_translation)
+        for point in self.points:
+            translated_point = tuple(a + b for a, b in zip (constrained_translation, point))
+            translated_points.append(translated_point)
+        self.points = translated_points
+
+
 class PlaneXZ(PlaneXY):
     def __init__(self, origin, size, limit):
         """
@@ -307,3 +333,31 @@ class PlaneXZ(PlaneXY):
         v3 = pg.math.Vector3((0, 0, size))
         color = (80, 20, 60)
         return [v1, v2, v3, color]
+
+    def constrain(self, translation):
+        """
+        Constrain along y-axis (limit).
+            @return constrained 3-tuple
+        """
+        origin_x, origin_y, origin_z = self.origin
+        x, y, z = self.position
+        dy = origin_y - y + translation
+        max, min = self.limit, -self.limit
+        if dy >= max:
+            translation = min + translation
+        elif dy <= min:
+            translation = max - translation
+        return (0, translation, 0)
+
+    def translate(self, translation):
+        """
+        Apply translation to to xyz tuples and constrain if needed.
+            @param translation y
+        """
+        translated_points = []
+        constrained_translation = self.constrain(translation)
+        self.update_position(*constrained_translation)
+        for point in self.points:
+            translated_point = tuple(a + b for a, b in zip (constrained_translation, point))
+            translated_points.append(translated_point)
+        self.points = translated_points

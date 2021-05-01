@@ -4,6 +4,7 @@ import sys
 import pygame as pg
 
 import rgb_holder
+import plane_manager
 from projections import point_projection
 from prisms3 import prisms
 
@@ -154,17 +155,12 @@ class RGBScene(MultiScene):
         cube_size = self.RGBGraph.get_stepwise()
         self.cube = prisms.Cube(self.point, cube_size)
         self.cube.apply_alpha(100)
-        plane_size = int(1*cube_size)
-        self.p1 = tuple(a-b for a, b in zip(self.point, (-cube_size/2, -cube_size/2, cube_size/2)))
-        self.planeXY = prisms.PlaneXY(self.point, plane_size, cube_size)
-        self.planeYZ = prisms.PlaneYZ(self.point, plane_size, cube_size)
-        self.planeXZ = prisms.PlaneXZ(self.point, plane_size, cube_size)
-        self.planes = {"xy": self.planeXY, "yz": self.planeYZ, "xz": self.planeXZ}
-        self.isometric_scene = IsometricScene(self.screen, rect, self.planes, self.cube)
+        plane_size = cube_size
+        self.plane_manager = plane_manager.PlaneManager(self.point, plane_size, (cube_size, cube_size, cube_size))
+        self.isometric_scene = IsometricScene(self.screen, rect, self.plane_manager, self.cube)
 
     def handle_events(self):
         events = pg.event.get()
-        self.isometric_scene.handle_events(events)
         for event in events:
             if event.type == pg.QUIT:
                 pg.quit()
@@ -174,22 +170,22 @@ class RGBScene(MultiScene):
                     pg.quit()
                     sys.exit()
                 if event.key == pg.K_UP:
-                    self.RGBGraph.change_z_val(1)
-                    self.planeXY.translate(0, 0, 1)
+                    translation = 1
+                    self.plane_manager.move_active_plane(translation)
+                    self.RGBGraph.translate(translation)
                 if event.key == pg.K_DOWN:
-                    self.RGBGraph.change_y_val(1)
-                    self.planeXZ.translate(0, 1, 0)
+                    pass
                 if event.key == pg.K_LEFT:
-                    self.RGBGraph.update_plane_xyz(1)
+                    self.RGBGraph.update_active_plane()
+                    self.plane_manager.set_active_plane()
                 if event.key == pg.K_RIGHT:
-                    self.RGBGraph.change_x_val(1)
-                    self.planeYZ.translate(1, 0, 0)
+                    pass
 
     def render(self):
         self.screen.fill((100, 100, 100))
         self.RGBGraph.render(self.screen)
         self.blit_text(self.screen, self.name_surface, (0, 0))
-        self.isometric_scene.render(self.RGBGraph.plane_xyz)
+        self.isometric_scene.render()
 
     def update(self):
         """Group update functions."""
@@ -197,37 +193,15 @@ class RGBScene(MultiScene):
 
 
 class IsometricScene(SubScene):
-    def __init__(self, screen, rect, planes, *shapes):
-        self.planes = planes
+    def __init__(self, screen, rect, *shapes):
         super().__init__(screen, rect, *shapes)
 
     def init(self):
         self.iso_transform = point_projection.Isometric(1)
 
-    def update(self):
-        pass
-
-    def handle_events(self, events):
-        for event in events:
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
-                    pg.quit()
-                    sys.exit()
-
-    def render(self, plane_xyz):
+    def render(self):
         self.subsurface.fill((155, 155, 155))
         self.blit_text(self.subsurface, self.name_surface, (0, 0))
-        x, y, z = plane_xyz
-        if x:
-            self.planes.get("yz").render(self.subsurface, self.iso_transform)
-        if y:
-            self.planes.get("xz").render(self.subsurface, self.iso_transform)
-        if z:
-            self.planes.get("xy").render(self.subsurface, self.iso_transform)
         for shape in self.args:
             shape.render(self.subsurface, self.iso_transform)
-
 
